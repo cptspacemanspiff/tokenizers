@@ -1,5 +1,6 @@
 use std::convert::TryInto;
 use std::sync::Arc;
+use std::collections::HashMap;
 
 use pyo3::exceptions;
 use pyo3::prelude::*;
@@ -11,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use tk::processors::bert::BertProcessing;
 use tk::processors::byte_level::ByteLevel;
 use tk::processors::roberta::RobertaProcessing;
+use tk::processors::id_remapping::IdRemappingProcessor;
 use tk::processors::sequence::Sequence;
 use tk::processors::template::{SpecialToken, Template};
 use tk::processors::PostProcessorWrapper;
@@ -58,6 +60,10 @@ impl PyPostProcessor {
                 .into_any()
                 .into(),
             PostProcessorWrapper::Sequence(_) => Py::new(py, (PySequence {}, base))?
+                .into_pyobject(py)?
+                .into_any()
+                .into(),
+            PostProcessorWrapper::IdRemapping(_) => Py::new(py, (PyIdRemappingProcessor {}, base))?
                 .into_pyobject(py)?
                 .into_any()
                 .into(),
@@ -467,6 +473,37 @@ impl PySequence {
     }
 }
 
+/// This post-processor remaps token IDs according to a provided mapping.
+///
+/// Args:
+///     id_map (:obj:`Dict[int, int]`):
+///         A dictionary mapping from input token IDs to output token IDs
+#[pyclass(extends=PyPostProcessor, module = "tokenizers.processors", name = "IdRemappingProcessor")]
+pub struct PyIdRemappingProcessor {}
+
+#[pymethods]
+impl PyIdRemappingProcessor {
+    #[new]
+    #[pyo3(text_signature = "(self, id_map)")]
+    fn new(id_map: &Bound<'_, PyDict>) -> PyResult<(Self, PyPostProcessor)> {
+        let mut rust_map = HashMap::new();
+        for item in id_map {
+            let (key, value) = item;
+            let key = key.extract::<u32>()?;
+            let value = value.extract::<u32>()?;
+            rust_map.insert(key, value);
+        }
+        Ok((
+            PyIdRemappingProcessor {},
+            PyPostProcessor::new(Arc::new(IdRemappingProcessor::new(rust_map).into())),
+        ))
+    }
+
+    fn __getnewargs__<'p>(&self, py: Python<'p>) -> PyResult<Bound<'p, PyTuple>> {
+        PyTuple::new(py, [PyDict::new(py)])
+    }
+}
+
 /// Processors Module
 #[pymodule]
 pub fn processors(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -476,6 +513,7 @@ pub fn processors(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyByteLevel>()?;
     m.add_class::<PyTemplateProcessing>()?;
     m.add_class::<PySequence>()?;
+    m.add_class::<PyIdRemappingProcessor>()?;
     Ok(())
 }
 

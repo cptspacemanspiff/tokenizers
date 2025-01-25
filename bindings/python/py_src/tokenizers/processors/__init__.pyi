@@ -134,6 +134,49 @@ class ByteLevel(PostProcessor):
         """
         pass
 
+class IdRemappingProcessor(PostProcessor):
+    """
+    This post-processor remaps token IDs according to a provided mapping.
+
+    Args:
+        id_map (:obj:`Dict[int, int]`):
+            A dictionary mapping from input token IDs to output token IDs
+    """
+    def __init__(self, id_map):
+        pass
+
+    def num_special_tokens_to_add(self, is_pair):
+        """
+        Return the number of special tokens that would be added for single/pair sentences.
+
+        Args:
+            is_pair (:obj:`bool`):
+                Whether the input would be a pair of sequences
+
+        Returns:
+            :obj:`int`: The number of tokens to add
+        """
+        pass
+
+    def process(self, encoding, pair=None, add_special_tokens=True):
+        """
+        Post-process the given encodings, generating the final one
+
+        Args:
+            encoding (:class:`~tokenizers.Encoding`):
+                The encoding for the first sequence
+
+            pair (:class:`~tokenizers.Encoding`, `optional`):
+                The encoding for the pair sequence
+
+            add_special_tokens (:obj:`bool`):
+                Whether to add the special tokens
+
+        Return:
+            :class:`~tokenizers.Encoding`: The final encoding
+        """
+        pass
+
 class RobertaProcessing(PostProcessor):
     """
     This post-processor takes care of adding the special tokens needed by
