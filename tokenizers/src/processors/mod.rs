@@ -1,5 +1,6 @@
 pub mod bert;
 pub mod roberta;
+pub mod id_remapping;
 pub mod sequence;
 pub mod template;
 
@@ -13,6 +14,7 @@ use crate::processors::bert::BertProcessing;
 use crate::processors::roberta::RobertaProcessing;
 use crate::processors::sequence::Sequence;
 use crate::processors::template::TemplateProcessing;
+use crate::processors::id_remapping::IdRemappingProcessor;
 use crate::{Encoding, PostProcessor, Result};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone, Eq)]
@@ -24,6 +26,7 @@ pub enum PostProcessorWrapper {
     ByteLevel(ByteLevel),
     Template(TemplateProcessing),
     Sequence(Sequence),
+    IdRemapping(IdRemappingProcessor),
 }
 
 impl PostProcessor for PostProcessorWrapper {
@@ -34,6 +37,7 @@ impl PostProcessor for PostProcessorWrapper {
             Self::Roberta(roberta) => roberta.added_tokens(is_pair),
             Self::Template(template) => template.added_tokens(is_pair),
             Self::Sequence(bl) => bl.added_tokens(is_pair),
+            Self::IdRemapping(remapper) => remapper.added_tokens(is_pair),
         }
     }
 
@@ -48,6 +52,7 @@ impl PostProcessor for PostProcessorWrapper {
             Self::Roberta(roberta) => roberta.process_encodings(encodings, add_special_tokens),
             Self::Template(template) => template.process_encodings(encodings, add_special_tokens),
             Self::Sequence(bl) => bl.process_encodings(encodings, add_special_tokens),
+            Self::IdRemapping(remapper) => remapper.process_encodings(encodings, add_special_tokens),
         }
     }
 }
@@ -57,6 +62,7 @@ impl_enum_from!(ByteLevel, PostProcessorWrapper, ByteLevel);
 impl_enum_from!(RobertaProcessing, PostProcessorWrapper, Roberta);
 impl_enum_from!(TemplateProcessing, PostProcessorWrapper, Template);
 impl_enum_from!(Sequence, PostProcessorWrapper, Sequence);
+impl_enum_from!(IdRemappingProcessor, PostProcessorWrapper, IdRemapping);
 
 #[cfg(test)]
 mod tests {

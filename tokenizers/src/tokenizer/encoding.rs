@@ -148,6 +148,10 @@ impl Encoding {
         &self.ids
     }
 
+    pub fn set_ids(&mut self, ids: Vec<u32>) {
+        self.ids = ids;
+    }
+
     pub fn get_type_ids(&self) -> &[u32] {
         &self.type_ids
     }
